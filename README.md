@@ -139,9 +139,9 @@ Future AI features may include:
 ```bash
 campus_nav/
 │
-├── public/                 # Frontend files
-├── server.js               # Backend server
-├── building6.db            # SQLite database
+├── public/main.html
+├── server.js
+├── building6.db
 ├── package.json
 ├── README.md
 └── LICENSE
@@ -194,7 +194,7 @@ PCCOE
 ## Ayush Thakare
 Second Year Computer Science & Engineering Student  
 PCCOE  
-GitHub Link: []
+GitHub Link: https://github.com/Ayu5h-2005
 
 ---
 
