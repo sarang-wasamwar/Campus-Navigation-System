@@ -154,7 +154,7 @@ campus_nav/
 ## 1️⃣ Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
+git clone https://github.com/sarang-wasamwar/Campus-Navigation-System.git
 ```
 
 ## 2️⃣ Navigate to Project Folder
@@ -192,8 +192,8 @@ PCCOE
 &
 
 ## Ayush Thakare
-Second Year Computer Science & Engineering Student
-PCCOE
+Second Year Computer Science & Engineering Student  
+PCCOE  
 GitHub Link: []
 
 ---
