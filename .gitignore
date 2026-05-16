@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 
 # Data Base
 .db
+
+# Package Lock (Optional)
+package-lock.json
