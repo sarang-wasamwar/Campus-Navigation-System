@@ -1,0 +1,1028 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building 6 — Campus Navigator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c10;
+    --panel: #11151c;
+    --panel2: #171c26;
+    --border: #1e2535;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --path: #ff3366;
+    --text: #c8d0e0;
+    --text2: #5a6480;
+    --green: #39ff87;
+    --yellow: #ffe234;
+    --radius: 8px;
+    --font-mono: 'Space Mono', monospace;
+    --font-display: 'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 52px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .logo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    color: #fff;
+  }
+  .logo span { color: var(--accent); }
+  .header-meta { font-size: 0.65rem; color: var(--text2); letter-spacing: 0.12em; text-transform: uppercase; }
+
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: var(--panel); }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .select-group { margin-bottom: 10px; }
+  .select-label { font-size: 0.62rem; color: var(--text2); margin-bottom: 4px; letter-spacing: 0.08em; }
+  select {
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235a6480' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  select:focus { border-color: var(--accent); }
+  select option { background: #1a1f2e; }
+
+  .route-divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    font-size: 0.6rem;
+    color: var(--text2);
+  }
+  .route-divider::before, .route-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .btn {
+    width: 100%;
+    padding: 9px 14px;
+    border-radius: var(--radius);
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    transition: all 0.2s;
+    font-weight: 700;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { background: #33eeff; box-shadow: 0 0 20px rgba(0,229,255,0.3); }
+  .btn-primary:disabled { background: #1e2535; color: var(--text2); cursor: not-allowed; box-shadow: none; }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    margin-top: 8px;
+  }
+  .btn-secondary:hover { border-color: var(--text2); color: var(--text); }
+
+  .floor-toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .floor-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .floor-toggle-label {
+    flex: 1;
+    font-size: 0.68rem;
+    color: var(--text);
+  }
+  .toggle {
+    width: 32px;
+    height: 18px;
+    background: var(--border);
+    border-radius: 9px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    border: none;
+    flex-shrink: 0;
+  }
+  .toggle.active { background: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+  }
+  .toggle.active::after { transform: translateX(14px); }
+
+  #path-result {
+    display: none;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    font-size: 0.68rem;
+    line-height: 1.7;
+  }
+  #path-result.visible { display: block; }
+  #path-result .step {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  #path-result .step:last-child { border-bottom: none; }
+  #path-result .step-num {
+    color: var(--accent);
+    min-width: 18px;
+    font-weight: 700;
+  }
+  #path-result .step-icon { min-width: 14px; text-align: center; }
+  .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.65rem; }
+  .stat-val { color: var(--accent); font-weight: 700; }
+
+  .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.62rem;
+    color: var(--text2);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .view-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .view-btn {
+    padding: 7px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .view-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  #canvas-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #080a0f;
+  }
+  #canvas-wrap canvas { display: block; }
+
+  #floor-hud {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,12,16,0.8);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 18px;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text2);
+    pointer-events: none;
+    backdrop-filter: blur(6px);
+  }
+
+  #tooltip {
+    position: absolute;
+    background: rgba(17,21,28,0.95);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    font-size: 0.65rem;
+    pointer-events: none;
+    display: none;
+    z-index: 20;
+    line-height: 1.5;
+    max-width: 180px;
+  }
+  #tooltip .tt-name { color: #fff; font-weight: 700; }
+  #tooltip .tt-info { color: var(--text2); }
+
+  .canvas-controls {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .cc-btn {
+    width: 34px; height: 34px;
+    background: rgba(17,21,28,0.9);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    backdrop-filter: blur(6px);
+  }
+  .cc-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  #statusbar {
+    height: 26px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 20px;
+    font-size: 0.58rem;
+    color: var(--text2);
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+  .sb-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BUILDING<span>6</span> // NAVIGATOR</div>
+  <div class="header-meta">Campus Pathfinding System · Dijkstra v1.0</div>
+</header>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="section">
+      <div class="section-title">Source</div>
+      <div class="select-group">
+        <div class="select-label">Floor</div>
+        <select id="src-floor">
+          <option value="">— Select —</option>
+          <option value="0">Ground Floor</option>
+          <option value="1">First Floor</option>
+          <option value="2">Second Floor</option>
+          <option value="3">Third Floor</option>
+          <option value="4">Fourth Floor</option>
+          <option value="5">Fifth Floor</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <div class="select-label">Room</div>
+        <select id="src-room"><option value="">— Select floor first —</option></select>
+      </div>
+
+      <div class="route-divider">↓ to</div>
+
+      <div class="select-group">
+        <div class="select-label">Floor</div>
+        <select id="dst-floor">
+          <option value="">— Select —</option>
+          <option value="0">Ground Floor</option>
+          <option value="1">First Floor</option>
+          <option value="2">Second Floor</option>
+          <option value="3">Third Floor</option>
+          <option value="4">Fourth Floor</option>
+          <option value="5">Fifth Floor</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <div class="select-label">Room</div>
+        <select id="dst-room"><option value="">— Select floor first —</option></select>
+      </div>
+
+      <button class="btn btn-primary" id="find-btn" disabled>FIND PATH</button>
+      <button class="btn btn-secondary" id="clear-btn">CLEAR</button>
+    </div>
+
+    <div class="section" id="result-section" style="display:none">
+      <div class="section-title">Route</div>
+      <div class="stat-row">
+        <span>Distance</span><span class="stat-val" id="stat-dist">—</span>
+      </div>
+      <div class="stat-row">
+        <span>Steps</span><span class="stat-val" id="stat-steps">—</span>
+      </div>
+      <div id="path-result"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Floors</div>
+      <div class="floor-toggles" id="floor-toggles"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Camera</div>
+      <div class="view-btns">
+        <button class="view-btn" id="vbtn-top">TOP VIEW</button>
+        <button class="view-btn" id="vbtn-iso">ISO VIEW</button>
+        <button class="view-btn" id="vbtn-reset">RESET CAM</button>
+        <button class="view-btn" id="vbtn-fit">FIT ALL</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Legend</div>
+      <div class="legend-grid">
+        <div class="legend-item"><div class="legend-dot" style="background:#2a5caa"></div>Classroom</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1a5c3a"></div>Lab</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3a2a5c"></div>Office</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4a3a1a"></div>Corridor</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#aa5c1a"></div>Staircase</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#5caa2a"></div>Lift</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ff3366"></div>Path</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00e5ff"></div>Start/End</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#cc8866"></div>Toilet</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ffaa44"></div>Library</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="canvas-wrap">
+    <div id="floor-hud">Building 6 — Loading...</div>
+    <div id="tooltip"><div class="tt-name" id="tt-name"></div><div class="tt-info" id="tt-info"></div></div>
+    <div class="canvas-controls">
+      <button class="cc-btn" id="cc-zoom-in" title="Zoom In">+</button>
+      <button class="cc-btn" id="cc-zoom-out" title="Zoom Out">−</button>
+      <button class="cc-btn" id="cc-reset" title="Reset View">⌂</button>
+    </div>
+  </div>
+</div>
+
+<div id="statusbar">
+  <div class="sb-dot"></div>
+  <span id="sb-text">Loading building data from server...</span>
+</div>
+
+<script>
+// Global variables
+let rooms = [];
+let roomMap = {};
+let floorGroups = {};
+let meshMap = {};
+let pathLines = [];
+let pathMarkers = [];
+let startPin = null;
+let endPin = null;
+
+// Constants
+const FLOOR_Y = [0, 14, 28, 42, 56, 70];
+const FLOOR_NAMES = ['Ground Floor','First Floor','Second Floor','Third Floor','Fourth Floor','Fifth Floor'];
+
+const ROOM_COLORS = {
+  classroom: 0x1a3a7a,
+  lab: 0x0d3d26,
+  office: 0x2a1a4a,
+  corridor: 0x1a1508,
+  stair_left: 0x7a3c0d,
+  stair_right: 0x7a3c0d,
+  stair_mid: 0x9c4a10,
+  lift_left: 0x2a6e14,
+  lift_right: 0x2a6e14,
+  toilet: 0xcc8866,
+  library: 0xffaa44
+};
+
+// Initialize Three.js
+const wrap = document.getElementById('canvas-wrap');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = false;
+renderer.setClearColor(0x080a0f, 1);
+wrap.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x080a0f, 0.004);
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
+let camMode = 'iso';
+function setCameraISO() {
+  camera.position.set(40, 30, 140);
+  camera.lookAt(40, 30, 20);   // was 0, now 15 – building shifts down on screen
+}
+function setCameraTop() {
+  camera.position.set(40, 200, 20);
+  camera.lookAt(40, 50, 20);
+}
+setCameraISO();
+
+scene.add(new THREE.AmbientLight(0x8899cc, 0.6));
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+dirLight.position.set(50, 100, 50);
+scene.add(dirLight);
+
+FLOOR_Y.forEach((y, i) => {
+  const pl = new THREE.PointLight(0x4488ff, 0.3, 60);
+  pl.position.set(40, y + 6, 20);
+  scene.add(pl);
+});
+
+const gridHelper = new THREE.GridHelper(200, 40, 0x1a2030, 0x0e1320);
+gridHelper.position.set(40, -0.5, 20);
+scene.add(gridHelper);
+
+// Camera controls
+let isDragging = false, lastMouse = {x:0,y:0};
+let spherical = { theta: 0.6, phi: 0.85, radius: 160 };
+let panOffset = new THREE.Vector3(40, 30, 20);
+
+function updateCamera() {
+  const x = panOffset.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+  const y = panOffset.y + spherical.radius * Math.cos(spherical.phi);
+  const z = panOffset.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+  camera.position.set(x, y, z);
+  camera.lookAt(panOffset.x, panOffset.y, panOffset.z);
+}
+updateCamera();
+
+const canvas = renderer.domElement;
+
+canvas.addEventListener('mousedown', e => { isDragging = true; lastMouse = {x:e.clientX,y:e.clientY}; });
+window.addEventListener('mouseup', () => isDragging = false);
+window.addEventListener('mousemove', e => {
+  if (!isDragging) {
+    handleHover(e);
+    return;
+  }
+  const dx = e.clientX - lastMouse.x;
+  const dy = e.clientY - lastMouse.y;
+  lastMouse = {x:e.clientX,y:e.clientY};
+  if (e.buttons === 1) {
+    spherical.theta -= dx * 0.005;
+    spherical.phi = Math.max(0.1, Math.min(Math.PI/2 - 0.05, spherical.phi + dy * 0.005));
+  } else if (e.buttons === 2) {
+    panOffset.x -= dx * 0.15;
+    panOffset.z -= dy * 0.15;
+  }
+  updateCamera();
+});
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('wheel', e => {
+  spherical.radius = Math.max(20, Math.min(400, spherical.radius + e.deltaY * 0.2));
+  updateCamera();
+});
+
+// Touch support
+let lastTouchDist = 0;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) { isDragging = true; lastMouse = {x:e.touches[0].clientX, y:e.touches[0].clientY}; }
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    lastTouchDist = Math.sqrt(dx*dx+dy*dy);
+  }
+});
+canvas.addEventListener('touchend', () => { isDragging = false; });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 1 && isDragging) {
+    const dx = e.touches[0].clientX - lastMouse.x;
+    const dy = e.touches[0].clientY - lastMouse.y;
+    lastMouse = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+    spherical.theta -= dx * 0.005;
+    spherical.phi = Math.max(0.1, Math.min(Math.PI/2-0.05, spherical.phi + dy*0.005));
+    updateCamera();
+  }
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const d = Math.sqrt(dx*dx+dy*dy);
+    spherical.radius = Math.max(20, Math.min(400, spherical.radius - (d - lastTouchDist)*0.5));
+    lastTouchDist = d;
+    updateCamera();
+  }
+}, { passive: false });
+
+function createLocationMarker(color, height = 4.5, radius = 2.25) {
+    const group = new THREE.Group();
+    // Inverted cone: wide at top, point at bottom
+    const pyramidGeo = new THREE.CylinderGeometry(0, radius, height, 4);
+    pyramidGeo.rotateX(Math.PI);
+    const pyramidMat = new THREE.MeshStandardMaterial({ color: color });
+    const pyramid = new THREE.Mesh(pyramidGeo, pyramidMat);
+    pyramid.position.y = height / 2;
+    group.add(pyramid);
+    return group;
+}
+
+// Hover tooltip
+const raycaster = new THREE.Raycaster();
+const mouse2d = new THREE.Vector2();
+const tooltip = document.getElementById('tooltip');
+
+function handleHover(e) {
+  const rect = canvas.getBoundingClientRect();
+  mouse2d.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse2d.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse2d, camera);
+
+  const meshes = Object.values(meshMap);
+  const hits = raycaster.intersectObjects(meshes, false);
+  if (hits.length > 0) {
+    const node = hits[0].object.userData.node;
+    if (node) {
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+      tooltip.style.top  = (e.clientY - rect.top  - 10) + 'px';
+      document.getElementById('tt-name').textContent = node.name;
+      document.getElementById('tt-info').textContent = `${FLOOR_NAMES[node.floor]} · ${node.type.replace(/_/g,' ')}`;
+      canvas.style.cursor = 'pointer';
+      return;
+    }
+  }
+  tooltip.style.display = 'none';
+  canvas.style.cursor = 'default';
+}
+
+// Build 3D meshes from room data
+function buildFloorMeshes(floorIdx) {
+  const group = new THREE.Group();
+  const floorRooms = rooms.filter(r => r.floor === floorIdx);
+  const y = FLOOR_Y[floorIdx];
+
+  floorRooms.forEach(room => {
+    const h = room.is_corridor ? 0.3 : (room.is_stair || room.is_lift ? 3.5 : 3.2);
+    const geo = new THREE.BoxGeometry(room.w, h, room.d);
+    const baseColor = ROOM_COLORS[room.type] || 0x223344;
+    const mat = new THREE.MeshLambertMaterial({
+      color: baseColor,
+      transparent: true,
+      opacity: room.is_corridor ? 0.55 : 0.92,
+    });
+
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(room.center_x, y + h / 2, room.center_z);
+    mesh.userData = { nodeId: room.id, node: room };
+    group.add(mesh);
+    meshMap[room.id] = mesh;
+
+    const edges = new THREE.EdgesGeometry(geo);
+    const lineMat = new THREE.LineBasicMaterial({
+      color: room.is_corridor ? 0x2a2000 : 0x334466,
+      transparent: true, opacity: 0.5,
+    });
+    const lineSegs = new THREE.LineSegments(edges, lineMat);
+    mesh.add(lineSegs);
+
+    if (room.is_stair) {
+      const iconGeo = new THREE.BoxGeometry(room.w * 0.5, 0.4, room.d * 0.5);
+      const iconMat = new THREE.MeshLambertMaterial({ color: 0xff8833 });
+      const icon = new THREE.Mesh(iconGeo, iconMat);
+      icon.position.y = h / 2 + 0.2;
+      mesh.add(icon);
+    }
+    if (room.is_lift) {
+      const iconGeo = new THREE.BoxGeometry(room.w * 0.5, 0.4, room.d * 0.5);
+      const iconMat = new THREE.MeshLambertMaterial({ color: 0x44ff88 });
+      const icon = new THREE.Mesh(iconGeo, iconMat);
+      icon.position.y = h / 2 + 0.2;
+      mesh.add(icon);
+    }
+  });
+
+  const slabGeo = new THREE.BoxGeometry(100, 0.15, 50);
+  const slabMat = new THREE.MeshLambertMaterial({ color: 0x0d1018, transparent: true, opacity: 0.7 });
+  const slab = new THREE.Mesh(slabGeo, slabMat);
+  slab.position.set(40, y - 0.07, 20);
+  group.add(slab);
+
+  scene.add(group);
+  floorGroups[floorIdx] = group;
+}
+
+// Clear path visualization
+function clearPath() {
+  pathLines.forEach(o => scene.remove(o));
+  pathLines = [];
+  pathMarkers.forEach(o => scene.remove(o));
+  pathMarkers = [];
+  if (startPin) { scene.remove(startPin); startPin = null; }
+  if (endPin) { scene.remove(endPin); endPin = null; }
+  Object.values(meshMap).forEach(mesh => {
+    if (mesh.userData.node) {
+      const room = mesh.userData.node;
+      mesh.material.color.setHex(ROOM_COLORS[room.type] || 0x223344);
+    }
+  });
+}
+
+// Draw path from room IDs
+function drawPath(pathIds) {
+  clearPath();
+  if (!pathIds || pathIds.length < 2) return;
+
+  const pathColor = 0xff3366;
+  const startColor = 0x00e5ff;
+  const endColor = 0xffff00;
+
+  // Group by floor for continuous segments
+  let segments = [];
+  let seg = [pathIds[0]];
+  for (let i = 1; i < pathIds.length; i++) {
+    const prev = roomMap[pathIds[i-1]];
+    const cur = roomMap[pathIds[i]];
+    if (prev.floor !== cur.floor) {
+      segments.push(seg);
+      seg = [pathIds[i]];
+    } else {
+      seg.push(pathIds[i]);
+    }
+  }
+  segments.push(seg);
+
+  segments.forEach(seg => {
+    if (seg.length < 2) return;
+    const pts = seg.map(id => {
+      const n = roomMap[id];
+      return new THREE.Vector3(n.center_x, FLOOR_Y[n.floor] + 4.5, n.center_z);
+    });
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({ color: pathColor });
+    const line = new THREE.Line(geo, mat);
+    scene.add(line);
+    pathLines.push(line);
+  });
+
+  // Vertical connectors
+  for (let i = 1; i < pathIds.length; i++) {
+    const a = roomMap[pathIds[i-1]], b = roomMap[pathIds[i]];
+    if (a.floor !== b.floor) {
+      const pts = [
+        new THREE.Vector3(a.center_x, FLOOR_Y[a.floor] + 4.5, a.center_z),
+        new THREE.Vector3(b.center_x, FLOOR_Y[b.floor] + 4.5, b.center_z),
+      ];
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineBasicMaterial({ color: 0xff8844 });
+      const line = new THREE.Line(geo, mat);
+      scene.add(line);
+      pathLines.push(line);
+    }
+  }
+
+  // Markers
+  // pathIds.forEach((id, idx) => {
+  //   const n = roomMap[id];
+  //   const isFirst = idx === 0, isLast = idx === pathIds.length - 1;
+  //   const color = isFirst ? startColor : isLast ? endColor : pathColor;
+  //   const size = (isFirst || isLast) ? 2.2 : 1.0;
+  //   const geo = new THREE.SphereGeometry(size, 12, 8);
+  //   const mat = new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: 0.5 });
+  //   const sphere = new THREE.Mesh(geo, mat);
+  //   sphere.position.set(n.center_x, FLOOR_Y[n.floor] + 5.5, n.center_z);
+  //   scene.add(sphere);
+  //   pathMarkers.push(sphere);
+
+  //   if (meshMap[id]) {
+  //     meshMap[id].material.color.setHex(isFirst ? 0x006688 : isLast ? 0x886600 : 0x882244);
+  //   }
+  // });
+    pathIds.forEach((id, idx) => {
+      const n = roomMap[id];
+      const isFirst = idx === 0, isLast = idx === pathIds.length - 1;
+      if (isFirst) {
+          if (startPin) scene.remove(startPin);
+          startPin = createLocationMarker(0x44ff44); // green
+          startPin.position.set(n.center_x, FLOOR_Y[n.floor] + 3.8, n.center_z);
+          scene.add(startPin);
+          pathMarkers.push(startPin);
+      } else if (isLast) {
+          if (endPin) scene.remove(endPin);
+          endPin = createLocationMarker(0xff4444); // red
+          endPin.position.set(n.center_x, FLOOR_Y[n.floor] + 3.8, n.center_z);
+          scene.add(endPin);
+          pathMarkers.push(endPin);
+      } else {
+          // intermediate markers – keep as small spheres
+          const geo = new THREE.SphereGeometry(0.8, 8, 8);
+          const mat = new THREE.MeshLambertMaterial({ color: 0xff3366 });
+          const sphere = new THREE.Mesh(geo, mat);
+          sphere.position.set(n.center_x, FLOOR_Y[n.floor] + 4.5, n.center_z);
+          scene.add(sphere);
+          pathMarkers.push(sphere);
+      }
+      if (meshMap[id]) {
+          meshMap[id].material.color.setHex(isFirst ? 0x006688 : isLast ? 0x886600 : 0x882244);
+      }
+  });
+}
+
+// Generate directions
+function generateDirections(pathIds) {
+  const steps = [];
+  const src = roomMap[pathIds[0]];
+  steps.push({ icon: '📍', text: `Start at ${src.name} (${FLOOR_NAMES[src.floor]})` });
+
+  for (let i = 1; i < pathIds.length; i++) {
+    const cur = roomMap[pathIds[i]];
+    const prev = roomMap[pathIds[i-1]];
+
+    if (cur.floor !== prev.floor) {
+      const direction = cur.floor > prev.floor ? 'up to' : 'down to';
+      let method = 'via staircase';
+      if (cur.is_lift || prev.is_lift) method = 'via lift';
+      else if (cur.id.startsWith('SL') || prev.id.startsWith('SL')) method = 'via left staircase';
+      else if (cur.id.startsWith('SR') || prev.id.startsWith('SR')) method = 'via right staircase';
+      else if (cur.id.startsWith('SM') || prev.id.startsWith('SM')) method = 'via middle staircase';
+      steps.push({ icon: cur.floor > prev.floor ? '⬆' : '⬇',
+                   text: `Go ${direction} ${FLOOR_NAMES[cur.floor]} ${method}` });
+    } else if (cur.is_corridor) {
+      steps.push({ icon: '→', text: `Walk through ${FLOOR_NAMES[cur.floor]} corridor` });
+    } else if (i === pathIds.length - 1) {
+      steps.push({ icon: '🏁', text: `Arrive at ${cur.name}` });
+    }
+  }
+  return steps;
+}
+
+// UI functions
+function populateRoomDropdown(select, floorIdx) {
+  select.innerHTML = '<option value="">— Select Room —</option>';
+  if (floorIdx === '') return;
+  const floorRooms = rooms.filter(r => 
+    r.floor === parseInt(floorIdx) && 
+    !r.is_corridor && 
+    !r.is_stair && 
+    !r.is_lift
+  );
+  floorRooms.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = r.name;
+    select.appendChild(opt);
+  });
+}
+
+function checkReady() {
+  const ok = document.getElementById('src-room').value &&
+             document.getElementById('dst-room').value;
+  document.getElementById('find-btn').disabled = !ok;
+}
+
+function setStatus(msg) {
+  document.getElementById('sb-text').textContent = msg;
+}
+
+// Load building data from server
+async function loadBuildingData() {
+  try {
+    const roomsRes = await fetch('/api/rooms');
+    rooms = await roomsRes.json();
+    roomMap = {};
+    rooms.forEach(r => roomMap[r.id] = r);
+    
+    // Build 3D scene
+    for (let f = 0; f < 6; f++) {
+      buildFloorMeshes(f);
+    }
+
+    // Setup floor toggles
+    const toggleContainer = document.getElementById('floor-toggles');
+    FLOOR_NAMES.forEach((name, i) => {
+      const row = document.createElement('div');
+      row.className = 'floor-toggle-row';
+      row.innerHTML = `<span class="floor-toggle-label">${name}</span>`;
+      const btn = document.createElement('button');
+      btn.className = 'toggle active';
+      btn.title = `Toggle ${name}`;
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+        floorGroups[i].visible = btn.classList.contains('active');
+      });
+      row.appendChild(btn);
+      toggleContainer.appendChild(row);
+    });
+    
+    // Setup room dropdowns
+    document.getElementById('src-floor').addEventListener('change', e => {
+      populateRoomDropdown(document.getElementById('src-room'), e.target.value);
+      checkReady();
+    });
+    document.getElementById('dst-floor').addEventListener('change', e => {
+      populateRoomDropdown(document.getElementById('dst-room'), e.target.value);
+      checkReady();
+    });
+    document.getElementById('src-room').addEventListener('change', checkReady);
+    document.getElementById('dst-room').addEventListener('change', checkReady);
+    
+    document.getElementById('find-btn').addEventListener('click', async () => {
+      const srcId = document.getElementById('src-room').value;
+      const dstId = document.getElementById('dst-room').value;
+      if (!srcId || !dstId) return;
+      if (srcId === dstId) {
+        setStatus('⚠ Source and destination are the same room.');
+        return;
+      }
+      
+      setStatus('Finding shortest path...');
+      const res = await fetch(`/api/shortest-path?src=${srcId}&dst=${dstId}`);
+      const data = await res.json();
+      
+      if (data.error) {
+        setStatus(`✗ ${data.error}`);
+        return;
+      }
+      
+      drawPath(data.path);
+      document.getElementById('stat-dist').textContent = data.cost.toFixed(1) + ' u';
+      document.getElementById('stat-steps').textContent = data.path.length;
+      document.getElementById('result-section').style.display = '';
+      
+      const div = document.getElementById('path-result');
+      div.classList.add('visible');
+      div.innerHTML = '';
+      const steps = generateDirections(data.path);
+      steps.forEach((step, i) => {
+        const row = document.createElement('div');
+        row.className = 'step';
+        row.innerHTML = `<span class="step-num">${i+1}</span>
+                         <span class="step-icon">${step.icon}</span>
+                         <span>${step.text}</span>`;
+        div.appendChild(row);
+      });
+      
+      setStatus(`✓ Path found: ${data.path.length} stops, distance ${data.cost.toFixed(1)} units`);
+    });
+    
+    document.getElementById('clear-btn').addEventListener('click', () => {
+      clearPath();
+      document.getElementById('src-floor').value = '';
+      document.getElementById('dst-floor').value = '';
+      document.getElementById('src-room').innerHTML = '<option value="">— Select floor first —</option>';
+      document.getElementById('dst-room').innerHTML = '<option value="">— Select floor first —</option>';
+      document.getElementById('find-btn').disabled = true;
+      document.getElementById('result-section').style.display = 'none';
+      document.getElementById('path-result').classList.remove('visible');
+      setStatus('Cleared. Select source and destination to navigate.');
+    });
+    
+    // View controls
+    document.getElementById('vbtn-top').addEventListener('click', () => {
+      spherical = { theta: 0, phi: 0.05, radius: 200 };
+      panOffset.set(40, 0, 20);
+      updateCamera();
+      setStatus('Top-down view active.');
+    });
+    document.getElementById('vbtn-iso').addEventListener('click', () => {
+      spherical = { theta: 0.8, phi: 0.7, radius: 150 };
+      panOffset.set(40, 10, 20);
+      updateCamera();
+      setStatus('Isometric view active.');
+    });
+    document.getElementById('vbtn-reset').addEventListener('click', () => {
+      spherical = { theta: 0.6, phi: 0.85, radius: 160 };
+      panOffset.set(40, 30, 20);
+      updateCamera();
+    });
+    document.getElementById('vbtn-fit').addEventListener('click', () => {
+      spherical = { theta: 0.5, phi: 0.7, radius: 220 };
+      panOffset.set(40, 35, 20);
+      updateCamera();
+      setStatus('Fit all floors view.');
+    });
+    document.getElementById('cc-zoom-in').addEventListener('click', () => { spherical.radius = Math.max(20, spherical.radius - 20); updateCamera(); });
+    document.getElementById('cc-zoom-out').addEventListener('click', () => { spherical.radius = Math.min(400, spherical.radius + 20); updateCamera(); });
+    document.getElementById('cc-reset').addEventListener('click', () => { document.getElementById('vbtn-reset').click(); });
+    
+    document.getElementById('floor-hud').textContent = 'Building 6 — All Floors';
+    setStatus(`Building 6 loaded — ${rooms.length} rooms. Select source and destination to navigate.`);
+  } catch (err) {
+    console.error('Error loading building data:', err);
+    setStatus('Error loading building data from server');
+  }
+}
+
+// Animation loop
+function resize() {
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+let t = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  t += 0.01;
+  // pathMarkers.forEach((m, i) => {
+  //   m.scale.setScalar(1 + 0.15 * Math.sin(t * 2 + i));
+  // });
+  // Keep the scaling pulse for intermediate markers (optional)
+  pathMarkers.forEach((m, i) => {
+      if (m !== startPin && m !== endPin && m.scale) {
+          m.scale.setScalar(1 + 0.1 * Math.sin(t * 4 + i));
+      }
+  });
+  renderer.render(scene, camera);
+}
+animate();
+
+// Start the application
+loadBuildingData();
+</script>
+</body>
+</html>
