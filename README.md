@@ -77,7 +77,9 @@ Each node represents:
 - Laboratories
 - Corridors
 - Staircases
-- Entry/Exit points
+- Toilets
+- Cabins/Offices
+- Lift
 
 Edges define the connectivity between locations.
 
@@ -186,6 +188,13 @@ The long-term goal of this project is to create a complete smart campus navigati
 ## Sarang Wasamwar
 Second Year Computer Science & Engineering Student  
 PCCOE
+
+&
+
+## Ayush Thakare
+Second Year Computer Science & Engineering Student
+PCCOE
+GitHub Link: []
 
 ---
 
