@@ -55,6 +55,7 @@ This project was developed under the **Advanced Data Structures (ADS)** subject 
 
 ## ✅ Implemented Concepts
 - Graph Representation
+- Basic Dijkstra’s Algorithm
 - Nodes and Edges
 - Path Traversal
 - Connectivity Mapping
@@ -75,11 +76,11 @@ The navigation system represents the building as a graph structure.
 Each node represents:
 - Classrooms
 - Laboratories
+- Cabins/Offices
 - Corridors
 - Staircases
+- Lifts
 - Toilets
-- Cabins/Offices
-- Lift
 
 Edges define the connectivity between locations.
 
@@ -122,7 +123,6 @@ Upgrade from SQLite to scalable databases such as:
 Future AI features may include:
 - Smart route prediction
 - Dynamic rerouting
-- Crowd-aware navigation
 - Accessibility-aware navigation
 
 ## 📱 Additional Features
@@ -139,9 +139,9 @@ Future AI features may include:
 ```bash
 campus_nav/
 │
-├── public/                 # Frontend files
-├── server.js               # Backend server
-├── building6.db            # SQLite database
+├── public/main.html
+├── server.js
+├── building6.db
 ├── package.json
 ├── README.md
 └── LICENSE
@@ -187,14 +187,12 @@ The long-term goal of this project is to create a complete smart campus navigati
 
 ## Sarang Wasamwar
 Second Year Computer Science & Engineering Student  
-PCCOE
-
-&
+PCCOE  
 
 ## Ayush Thakare
 Second Year Computer Science & Engineering Student  
 PCCOE  
-GitHub Link: []
+GitHub Link: https://github.com/Ayu5h-2005
 
 ---
 
